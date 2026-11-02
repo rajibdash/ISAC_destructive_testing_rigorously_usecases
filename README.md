@@ -1,6 +1,6 @@
 # ISAC defensive resilience and fault-injection test catalogue
 
-This repository collects safety-bounded testing use cases for integrated sensing and communication (ISAC), gNodeBs, sensing-capable radios, and cellular-site continuity when an unidentified drone is observed near critical infrastructure. It addresses detection, uncertainty, operator notification, service continuity, and recovery, including simulated wartime-like infrastructure degradation.
+This repository collects safety-bounded testing use cases for integrated sensing and communication (ISAC), gNodeBs, sensing-capable radios, devices, core-network services, and cellular-site continuity when an unidentified drone is observed near critical infrastructure. It addresses detection, uncertainty, operator notification, service continuity, and recovery, including simulated wartime-like infrastructure degradation and an explicitly declared architecture with core-hosted AI.
 
 **Status:** this is a test-design catalogue, not an implemented test harness, certified protection system, or record of completed tests. No deployment, thresholds, or test results have been supplied.
 
@@ -31,6 +31,41 @@ Radar-like observations generally cannot establish operator identity, payload, a
 
 Protection therefore requires layered safety governance, independent confirmation where available, uncertainty-aware operator workflows, infrastructure resilience, and coordination with authorized responders. This catalogue tests those interfaces without prescribing military deployment or engagement.
 
+## Core-network and AI-domain responsibilities
+
+The original radio-focused catalogue treated core failure mainly as a dependency outage (TC-024, TC-033, TC-034). That was insufficient: a healthy radio and accurate local detector can still produce an unusable end-to-end service if core admission, identity, transport, policy, sensing coordination, analytics, AI serving, or operator delivery fails. TC-061 through TC-128 extend the baseline without replacing the radio tests.
+
+**Architecture qualification:** "6G Core" and "AI domain in the core" describe the system under test, not a standardized architecture asserted by this README. Inventory the actual functions, contracts, implementation status and applicable specification editions. The 5G Core functions below are established architectural reference points; do not relabel them as finalized 6G functions or assume that a sensing orchestrator or object-identification AI is a standardized network function.
+
+NWDAF (Network Data Analytics Function) provides specified network analytics in supported 5GS implementations. It is not, merely by being present, an object-identification engine, a safety authority, or a counter-drone controller. Model training/serving capabilities, sensing management, object fusion, and AI-to-network-control interfaces must each be declared and qualified separately. A normative Stage-1 service requirement does not by itself establish an interoperable core/RAN implementation.
+
+### Responsibility and ownership map
+
+Assign named implementation owners and independent acceptance reviewers for each row. A function may be external to the core, distributed, optional, or absent; document that explicitly rather than silently assigning all work to the gNodeB or to "AI."
+
+| Domain / reference functions | Responsibility to declare and stress | Principal new cases |
+|---|---|---|
+| Devices, sensing radios and RAN | Observation validity, resource enforcement, health reporting, local uncertainty, supported mobility and disconnected behavior; retain TC-001 through TC-060 | TC-064, TC-078, TC-113, TC-120 |
+| Access and subscription: AMF, AUSF, UDM/UDR where applicable | UE registration/mobility, subscriber authentication, authorized device participation and revocation; these do not authenticate a sensed physical object's identity | TC-062, TC-064, TC-068, TC-109 |
+| Sessions and user plane: SMF/UPF where applicable | Communication-session lifecycle, sensing-data transport where designed, routing, QoS enforcement, isolation and continuity | TC-063, TC-065, TC-067, TC-083 |
+| Policy and exposure: PCF, NSSF, NEF/AF where applicable | Policy/slice selection, admission, authorized exposure, quotas and revocation; RAN and transport must enforce their respective resource decisions | TC-066, TC-067, TC-071, TC-079, TC-082 |
+| Service-based core infrastructure: NRF, SCP if deployed, service endpoints | Discovery, routing, overload handling, credential lifecycle and bounded retries with observable errors | TC-069, TC-070, TC-081 |
+| Sensing service coordination / fusion application, if implemented | Job/task admission, capabilities, lifecycle/cancellation, observation correlation, uncertainty propagation and consumer notification; hosting and interfaces are deployment specific | TC-061, TC-073, TC-074, TC-078, TC-109 |
+| Analytics: NWDAF and declared analytics consumers | Subscription lifecycle, freshness, analytics limitations and scoped recommendations; prohibit accidental substitution of network analytics for object truth | TC-072, TC-106, TC-111 |
+| Core-hosted AI platform, if implemented | Data/model governance, preprocessing, training/validation, registry, serving, calibrated abstention, resource isolation, release/rollback and decision provenance | TC-085 through TC-112 |
+| Platform / operations / data owners | Shared-failure domains, state consistency, autoscaling, deployment, backup/restore, retention and jurisdiction boundaries across core and AI | TC-075 through TC-082, TC-114 through TC-128 |
+| Safety and human operations | Independent stop authority, approval of permitted network-control actions, uncertainty-aware review and responder notification; no AI authority to infer hostility or engage | TC-107, TC-108, TC-112, TC-118, TC-123 |
+
+### Core-hosted AI service contract
+
+Record the actual path, for example: authorized observations -> authenticated ingestion -> schema/time/frame validation -> feature processing -> AI inference/fusion -> uncertainty-aware track service -> authorized consumer/operator. Communication/session establishment, core policy, orchestration, network analytics and model lifecycle are dependencies or control paths, not necessarily serial steps in every observation.
+
+Distinguish physical-object detection, class estimation, track association, cooperative claimed identity, subscriber/device identity, authorization, and intent. Store confidence and provenance for each supported assertion; a subscriber identity, track ID, Remote ID claim or model score cannot substitute for the others.
+
+Define per-hop and end-to-end age/deadline budgets, data rights, allowed consumers, overload behavior, expiry, cancellation and ownership. Carry observation time and clock uncertainty, source/frame/units, job and tenant identifiers, schema/preprocessing/model/calibration versions, and track lineage. Specify what happens without UE attachment, a PDU session, core connectivity, a model, or a required sensor. Do not invent a dependency on a UE/PDU session for a deployment that uses network-side sensing transport.
+
+Core-hosted AI may make the core a shared failure and resource-contention domain. Declare whether inference is advisory only or may request bounded, reversible network-resource changes. Any permitted write path needs independent policy validation, scope/expiry, audit, rate limits and stop authority; it must never control real engagement. Replacing failed AI with a fallback is valid only when that fallback is separately qualified and visibly reports its limitations; "unavailable/unknown" is preferable to fabricated healthy output.
+
 ## Supported-mode and radio inventory
 
 These are coverage axes, not a claim that every combination is standardized, implemented, or physically possible. Record exact product/firmware capability, architecture, approved operating envelope, and supporting evidence before selecting a value. Unsupported combinations require a reason and review, not a passing result.
@@ -50,8 +85,14 @@ These are coverage axes, not a claim that every combination is standardized, imp
 | Environment `V` | Clear; modeled precipitation/fog; lighting variation; static/dynamic clutter; occlusion; multipath; ambient RF occupancy | Use qualified recordings/models or an approved benign live envelope; do not create hazardous weather or interference. |
 | Load `Q` | Approved minimum/nominal/maximum communication, object, sensor, and compute loads | Include burst and sustained workloads within equipment safety limits. |
 | Fault set `F` | Single failures; independent and common-cause combinations; recovery failures | Fault effects are injected through isolated software, emulators, and approved lab interfaces. |
+| Core/service placement `C` | Central/regional/edge core; core-hosted AI; split core/edge/device AI; local or federated sensing service; supported inter-operator arrangements | Inventory actual service/function versions, APIs, dependency graph, shared-failure domains, state ownership and trust/jurisdiction boundaries. |
+| Core load `B` | UE registrations; session churn; mobility; API requests; sensing jobs; subscriptions/consumers; data throughput; tenants/slices | Declare bounded baseline, burst, ramp, sustained, admission-limit and recovery load values separately; distinguish offered, admitted, rejected and completed work. |
+| AI configuration `J` | Enabled/unavailable; advisory/bounded network-control permission; model/preprocessing versions; inference runtime/precision; batch policy; single/multi-modal; optional distributed training or generative assistant | Inventory only implemented features; training, analytics, inference, fusion and control are separate capabilities. An excluded optional feature is not a passed case. |
+| Governance `H` | Authorized/revoked/expired identity; tenant/slice; data purpose, consent or other legal basis; retention; residency; model approval state | Use synthetic identities and approved fixtures; device authorization is separate from physical-object identity and response authority. |
 
 For each radio, record model, firmware, sensing capability evidence, calibration procedure, supported axis values, clock source, observation format, uncertainty representation, health reporting, safe operating limits, and rollback procedure. Record simulated/prototype-only capabilities separately from deployed capabilities.
+
+For core and AI services, additionally record service owner, API/schema versions, caller permissions, dependencies, processing/storage locations, model/data lineage, resource reservations, failover/fencing rules, recovery objectives and approved degraded behavior. Apply relevant `M/R/X/N/U/L/V/Q/F` axes to the new core/AI cases as well as `C/B/J/H`; their interaction with radio and device conditions must not disappear from coverage accounting.
 
 ## Traceability and execution contract
 
@@ -63,7 +104,10 @@ Minimum instance record:
 instance_id: TC-001/<configuration-id>/<condition-id>/<repetition-id>
 requirement_ids: approved local requirement identifiers
 source_ids: bibliography identifiers + exact applicable clauses, if any
-configuration: M/G/P/R/X/D/W/N/U/L/V/Q/F values + software/model versions
+configuration: M/G/P/R/X/D/W/N/U/L/V/Q/F/C/B/J/H values + software/model versions
+ownership_and_path: responsible domain + dependency graph + end-to-end trace path
+load_profile: offered/admitted/completed/rejected work + ramp/burst/hold/recovery limits
+ai_contract: applicable model/data/feature versions + authority + expiry + fallback
 applicability: applicable | excluded-with-reviewed-rationale
 facility_and_authorization: isolated test boundary, permits, safety approval
 stimulus: synthetic/replay/HIL/shielded RF/authorized benign live
@@ -92,6 +136,11 @@ These IDs organize local requirements; they are not claims of conformance to a s
 | `REQ-RES` | Bounded degradation, fault isolation, rollback, and verified restoration |
 | `REQ-HUM` | Usable operator notification, acknowledgement, escalation, and authorization controls |
 | `REQ-SAF` | Independent stop authority, controlled live exercises, and inhibited hazardous actions |
+| `REQ-CORE` | Authorized and consistent core/service lifecycle, admission, overload handling and end-to-end service contracts |
+| `REQ-ID` | Separation and scoped binding of subscriber/device, object, track, tenant and authorization identities |
+| `REQ-AI` | Qualified AI performance, abstention, serving timeliness, model compatibility and lifecycle integrity |
+| `REQ-CTL` | Independently validated, bounded and reversible permitted network-control recommendations/actions |
+| `REQ-GOV` | Purpose-limited data/model use, residency, retention, revocation and accountable approvals |
 
 ### Acceptance profiles
 
@@ -108,8 +157,15 @@ All limits must be set **before execution** by accountable system/safety owners 
 | `A-RES` | Fault detection/isolation delay, degraded-state declaration, restoration time, state consistency and rollback correctness; meet approved limits with no false healthy state. |
 | `A-HUM` | Alarm delivery/acknowledgement/escalation latency, decision correctness and operator workload; satisfy approved workflow rules and usability criteria. |
 | `A-SAF` | Stop/interlock/authorization outcomes and reaction deadlines; no unauthorized action or real effector command, and every prescribed stop reaches the approved safe state. |
+| `A-CORE` | Admitted/completed/rejected job and API rates, registration/session success and tail latency, queue age, retry amplification, resource use and state convergence; meet approved load/latency/consistency budgets and return explicit bounded overload outcomes. |
+| `A-ID` | Tenant/identity binding, track lineage and authorization decisions against synthetic ground truth; no unauthorized cross-binding/disclosure or inferred physical identity from subscriber authentication. |
+| `A-AI` | Per-stratum/class precision/recall, unknown rejection, calibration, uncertainty coverage, inference tail latency and output age, numerical validity and approved model/preprocessing compatibility; meet approved quality/timeliness bounds or visibly abstain. |
+| `A-CTL` | Policy-check outcomes, action scope/expiry, change rate, stability, rollback and stop precedence; only independently authorized bounded network changes pass, with no autonomous engagement path. |
+| `A-GOV` | Data/model provenance and approval, purpose/consumer restrictions, storage/transfer locations, revocation propagation and retention/deletion completion; comply with approved policy and report unavailable enforcement explicitly. |
 
 Specify units, scoring denominators, matching rules, warm-up periods, measurement uncertainty, repetitions, confidence intervals, missing-data policy, and acceptance confidence in the approved profile. Separate detection, classification, and operator notification latency; an average must not hide a required tail-latency or worst-stratum failure.
+
+For core/AI stress tests, approve maximum load, ramp/burst/hold durations, queue capacities, admission limits, percentile definitions, recovery observation interval and stop limits before execution. Report offered load and all rejected, dropped, expired, timed-out, abstained and missing outputs; do not compute AI quality only on easy completed requests. Measure observation-to-consumer age as well as service processing time. Specify recovery point/time objectives and how accepted jobs and data are reconciled after a failure.
 
 ### Evidence and safe-stop codes
 
@@ -123,6 +179,9 @@ Evidence must use synchronized timestamps with measured clock uncertainty, indep
 | `E4` | Fault schedule, component health, queues, state transitions, alarms, rollback and recovery logs |
 | `E5` | Input provenance, schema/age/access decisions, audit records, and artifact-integrity checks |
 | `E6` | Mock-response calls, interlock states, operator actions, approvals, notifications, and stop/exercise logs |
+| `E7` | Synthetic subscriber/session/job/tenant identifiers, core API traces, policy/admission decisions, discovery/routing state, load counters and distributed trace spans |
+| `E8` | Approved evaluation dataset/split hashes, preprocessing/model/runtime versions, inference timestamps and outputs, quality/calibration/abstention scores, drift and resource telemetry |
+| `E9` | Model/data approvals and lineage, deployment/rollback history, control-policy decisions, access/revocation/retention/residency evidence and recovery reconciliations |
 
 Every instance needs a monitored trigger and named stop owner. The safety plan must specify what happens if the test system itself becomes unresponsive.
 
@@ -134,6 +193,7 @@ Every instance needs a monitored trigger and named stop owner. The safety plan m
 | `S4` | Recovery deadline exceeded, rollback fails, or fault escapes isolation: stop injection, inhibit unsafe outputs, and invoke the approved isolated restoration plan. |
 | `S5` | Missing authorization/interlock, uncontrolled mocked action, operator overload, or unavailable stop authority: inhibit response outputs and end the exercise through independent control. |
 | `S6` | Live-exercise boundary, permission, aircraft-control, uninvolved-aircraft/person separation, or weather limit breached: terminate via the approved aviation safety plan and coordinate with the authorized operator. |
+| `S7` | Tenant/purpose/residency boundary crossed, revoked access persists, or an unapproved model/control path becomes active: isolate the affected test services, inhibit outputs, preserve restricted audit evidence, and require governance/safety review before resuming. |
 
 Stop codes are mandatory minimums, not an exhaustive safety plan. A failed acceptance metric is recorded as a failure even if it does not require immediate physical termination.
 
@@ -230,17 +290,118 @@ These are mandatory risk-review candidates, not an exhaustive list of combinatio
 | TC-059 | Recovery after compound degraded operation; `L/N=ALL` | Remove emulated faults in controlled order | E1,E2,E3,E4 | A-SEN,A-COM,A-RAD,A-RES; recalibrate/revalidate dependencies before declaring restored service | S1,S2,S3,S4 | REQ-SEN,REQ-COM,REQ-RAD,REQ-RES |
 | TC-060 | Repeated fault/recovery cycles and sustained observation | Approved-duration synthetic endurance run | E1,E2,E4,E5 | A-TRK,A-COM,A-DAT,A-RES; bound resource growth, state drift and recurring failures | S1,S2,S3,S4 | REQ-SEN,REQ-COM,REQ-DAT,REQ-RES |
 
+### Core-network and sensing-service stress
+
+TC-061 through TC-084 use isolated core services, emulators and synthetic subscribers/traffic only. Where a named 5GC function is absent, instantiate the declared equivalent contract or record a reviewed exclusion; do not assume that an application-level sensing job is a PDU session. Each case inherits the execution, evidence, approval and stop requirements above.
+
+| ID | Scenario and axis coverage | Safe stimulus | Observable evidence | Acceptance profile and case-specific outcome | Stop | Requirement |
+|---|---|---|---|---|---|---|
+| TC-061 | Sensing capability discovery/admission; `C/B/M/R=ALL` | Bounded synthetic jobs requesting supported, unavailable and unsupported sensing capabilities | E3,E4,E7 | A-CORE,A-RAD; admit only authorized supported jobs within resource budgets; return explicit unsupported/overload outcomes | S2,S4,S7 | REQ-CORE,REQ-RAD |
+| TC-062 | UE registration and re-registration burst; `C/B/U=ALL` | Isolated UE emulator with synthetic subscribers, including absent/invalid subscriptions | E2,E4,E7 | A-CORE,A-COM,A-ID; bound authentication/registration load; do not authenticate a sensed object from UE attachment | S2,S4,S7 | REQ-CORE,REQ-COM,REQ-ID |
+| TC-063 | Session setup/modify/release churn; `C/B/N=ALL` | Synthetic sessions, duplicated requests and delayed completions in isolated core | E2,E4,E7 | A-CORE,A-COM; bound latency/state/resource leakage; reconcile retries without duplicate logical session effects | S2,S4 | REQ-CORE,REQ-COM,REQ-RES |
+| TC-064 | Device mobility, idle/paging and serving-node changes; `C/B/U/L=ALL` | UE/RAN emulator transitions with labeled sensing tracks | E1,E2,E7 | A-CORE,A-TRK,A-ID; preserve only valid service continuity; UE mobility must not silently reassign object identity | S2,S3,S4 | REQ-CORE,REQ-SEN,REQ-ID |
+| TC-065 | Sensing-data transport/UPF contention where applicable; `C/B/Q=ALL` | Bounded isolated microbursts and sustained test traffic | E1,E2,E4,E7 | A-CORE,A-COM,A-TRK; enforce declared QoS and freshness; measure loss/age across the actual sensing transport | S1,S2,S3 | REQ-CORE,REQ-COM,REQ-SEN |
+| TC-066 | Policy conflicts and admission priority; `C/B/M/H=ALL` | Mock competing communication/sensing policy updates | E2,E6,E7,E9 | A-CORE,A-COM,A-CTL; explicit policy precedence and rejection; RAN/core enforcement agree without unapproved priority escalation | S2,S5,S7 | REQ-CORE,REQ-COM,REQ-CTL |
+| TC-067 | Tenant/slice isolation and noisy neighbors; `C/B/H=ALL` | Synthetic tenants with independently bounded load and overlapping job identifiers | E2,E4,E7,E9 | A-CORE,A-COM,A-ID; enforce per-tenant resource/data isolation; no cross-tenant result delivery | S2,S4,S7 | REQ-CORE,REQ-COM,REQ-ID |
+| TC-068 | Authentication/subscription dependency loss and revocation; `C/B/H=ALL` | Mock AUSF/UDM/UDR unavailability, expiry and test credential revocation | E4,E5,E7 | A-CORE,A-ID,A-GOV; bounded failure and approved existing-session policy; no unauthorized access via stale caches | S4,S7 | REQ-CORE,REQ-ID,REQ-GOV |
+| TC-069 | Discovery/routing staleness during scaling; `C/B/L=ALL` | Isolated NRF/service-registry updates and stale endpoint fixtures | E4,E7 | A-CORE,A-RES; avoid retired/unready endpoints, bound rediscovery and preserve explicit failures | S2,S4 | REQ-CORE,REQ-RES |
+| TC-070 | Service API/SCP overload and retry amplification; `C/B=ALL` | Bounded API load, timeouts and explicit overload responses in isolated services | E4,E7 | A-CORE,A-COM; honor retry/deadline budgets and backpressure; dependency load stays within approved limits | S1,S2,S4 | REQ-CORE,REQ-COM,REQ-RES |
+| TC-071 | Exposure/subscription fan-out and slow consumers; `C/B/H=ALL` | Mock NEF/AF or declared service clients, stalled callbacks and cancellations | E4,E5,E7 | A-CORE,A-DAT,A-ID; quota/authorization enforced; slow consumer does not block others or receive expired data | S3,S4,S7 | REQ-CORE,REQ-DAT,REQ-ID |
+| TC-072 | NWDAF analytics load, expiry and unavailable input; `C/B/J=ALL` | Synthetic analytics subscriptions and stale/missing network counters | E4,E7,E8 | A-CORE,A-DAT,A-CTL; expose stale/unavailable analytics; no substitution for physical-object ground truth or unchecked control | S3,S4,S7 | REQ-CORE,REQ-DAT,REQ-CTL |
+| TC-073 | Event/observation broker backlog and schema evolution; `C/B/X=ALL` | Versioned fixtures with duplicates, reordering and bounded broker pressure | E4,E5,E7 | A-CORE,A-DAT,A-TRK; validate compatibility, bound age and make loss/replay visible | S3,S4 | REQ-CORE,REQ-DAT,REQ-SEN |
+| TC-074 | Sensing-job cancel/retry/expiry race; `C/B/L=ALL` | Test job requests with delayed acknowledgements and cancellation during execution | E4,E6,E7 | A-CORE,A-CTL; one authoritative lifecycle, no orphan resources or output accepted after cancellation/expiry | S4,S5 | REQ-CORE,REQ-RES,REQ-CTL |
+| TC-075 | Core/application state-store partition and leader conflict; `C/N=ALL` | Isolated replica partition and stale lease fixture | E4,E7,E9 | A-CORE,A-RES,A-CTL; fence stale writers and reconcile state; unavailable authority is not silently duplicated | S4,S5,S7 | REQ-CORE,REQ-RES,REQ-CTL |
+| TC-076 | Regional/core-service failover and restoration; `C/L=ALL` | Isolated service outage with synthetic accepted jobs/sessions | E2,E4,E7,E9 | A-CORE,A-COM,A-RES; meet approved recovery point/time objectives and reconcile accepted/lost work explicitly | S2,S4 | REQ-CORE,REQ-COM,REQ-RES |
+| TC-077 | Inter-operator/federated/roaming boundary where supported; `C/H=ALL` | Mock partner core and purpose-limited synthetic observations | E5,E7,E9 | A-CORE,A-ID,A-GOV; enforce authorization, residency and uncertainty provenance across boundary; no implied sensing-data sharing right | S3,S4,S7 | REQ-CORE,REQ-ID,REQ-GOV |
+| TC-078 | Core location/time/frame metadata stale or conflicting; `C/G/R=ALL` | Labeled coordinate/time fixtures through declared location/fusion services | E1,E3,E7 | A-RAD,A-DAT,A-TRK; reject invalid transformations and propagate clock/frame uncertainty to consumers | S3 | REQ-RAD,REQ-DAT,REQ-SEN |
+| TC-079 | Quota/accounting/charging dependency outage; `C/B/H=ALL` | Isolated counters, quota changes and mock accounting unavailability | E2,E4,E7,E9 | A-CORE,A-COM,A-GOV; explicit approved entitlement/degraded policy; no silent service denial or unbounded sensing admission | S2,S4,S7 | REQ-CORE,REQ-COM,REQ-GOV |
+| TC-080 | Core rolling upgrade/autoscale with active jobs; `C/B/L=ALL` | Approved isolated rollout, scale-in and incompatible API fixture | E2,E4,E7,E9 | A-CORE,A-COM,A-RES; drain/reassign work, reject incompatible versions and restore qualified baseline | S2,S4 | REQ-CORE,REQ-COM,REQ-RES |
+| TC-081 | Shared DNS/PKI/secret service failure or rotation; `C/H/L=ALL` | Mock resolution failure and test certificate/token expiry/rotation | E4,E5,E7 | A-CORE,A-ID,A-RES; bounded retries and recovery without disabling authentication or accepting revoked identities | S4,S7 | REQ-CORE,REQ-ID,REQ-RES |
+| TC-082 | Purpose/permission withdrawal and retention propagation; `C/H=ALL` | Synthetic revocation/deletion fixtures across caches, replicas and derived outputs | E5,E7,E9 | A-DAT,A-GOV; enforce approved legal retention/deletion basis and approved propagation deadline; expose residual copies | S3,S7 | REQ-DAT,REQ-GOV |
+| TC-083 | Communication/emergency-service priority under sensing load; `C/B/M/Q=ALL` | Isolated test sessions representing approved priority classes, never real emergency numbers | E2,E4,E7 | A-COM,A-CORE; preserve approved service budgets and visibly reject excess sensing demand | S2,S4 | REQ-COM,REQ-CORE,REQ-SAF |
+| TC-084 | Partial core transaction completion and lost acknowledgement; `C/B/L=ALL` | Fail isolated service between resource reservation, state update and reply | E4,E7,E9 | A-CORE,A-RES; idempotent retry or explicit reconciliation; no false success, orphan reservation or duplicate logical action | S4,S5 | REQ-CORE,REQ-RES,REQ-CTL |
+
+### AI domain hosted in the core
+
+TC-085 through TC-112 apply to declared AI capabilities, not automatically to NWDAF. Use authorized datasets, synthetic mutations and isolated model/runtime fixtures; no operational evasion or attack-generation procedure is required. Quality evaluation must include misses, unknowns, rejected/expired work and uncertainty, not just classifier accuracy on completed detections.
+
+| ID | Scenario and axis coverage | Safe stimulus | Observable evidence | Acceptance profile and case-specific outcome | Stop | Requirement |
+|---|---|---|---|---|---|---|
+| TC-085 | Feature/preprocessing contract mismatch; `C/J/R/X=ALL` | Golden samples plus wrong unit/order/schema/version fixtures | E1,E5,E8 | A-DAT,A-AI; reject incompatible pipeline versions; no plausible prediction from misinterpreted features | S3,S7 | REQ-DAT,REQ-AI |
+| TC-086 | Missing, truncated or non-finite AI input/output; `J/X=ALL` | Bounded invalid tensor/metadata/output fixtures in test adapter | E4,E5,E8 | A-DAT,A-AI; explicit validation failure/abstention, no fabricated class or confidence | S3,S4 | REQ-DAT,REQ-AI,REQ-UNC |
+| TC-087 | Inference burst, concurrency and batching; `C/B/J/Q=ALL` | Approved ramp/burst/hold workloads from labeled replay | E1,E4,E7,E8 | A-AI,A-CORE,A-COM; bound tail latency, oldest-item age and resource use; explicit overload/expiry | S1,S2,S3,S4 | REQ-AI,REQ-CORE,REQ-COM |
+| TC-088 | Accelerator memory pressure, device reset or worker crash; `C/J=ALL` | Bounded allocation load and emulated runtime faults, no equipment damage | E4,E8 | A-AI,A-RES; visible failure and qualified restart/fallback within approved limits, not invented results | S1,S3,S4 | REQ-AI,REQ-RES |
+| TC-089 | Cold start/model cache eviction/registry unavailable; `C/B/J/L=ALL` | Isolated cache reset and mock model-store outage | E4,E8,E9 | A-AI,A-RES; readiness follows verified model loading; report unavailable during warm-up | S3,S4,S7 | REQ-AI,REQ-RES |
+| TC-090 | Late inference, cancellation and result expiry; `C/B/J=ALL` | Delayed replay jobs and cancelled requests | E1,E7,E8 | A-AI,A-TRK,A-CORE; discard or explicitly label late outputs; never revive cancelled/stale tracks | S3,S4 | REQ-AI,REQ-SEN,REQ-CORE |
+| TC-091 | Out-of-distribution scene/device conditions; `J/R/V=ALL` | Independently held-out approved datasets and qualified simulation | E1,E8 | A-AI,A-UNC; characterize quality/coverage by stratum and flag unsupported inputs; no universal OOD-detection guarantee | S3 | REQ-AI,REQ-UNC |
+| TC-092 | Confidence calibration and abstention boundaries; `J/V/Q=ALL` | Versioned evaluation sets across ambiguity and load strata | E1,E8 | A-AI,A-UNC; meet approved calibration/uncertainty bounds and abstention policy including timely-output coverage | S3 | REQ-AI,REQ-UNC |
+| TC-093 | Unknown object classes and unsupported identity claims; `J/P/X=ALL` | Labeled unseen/ambiguous objects and missing cooperative identity | E1,E6,E8 | A-AI,A-ID,A-UNC; retain unknown class/identity and never infer hostile intent from score or identity absence | S3,S5 | REQ-AI,REQ-ID,REQ-UNC |
+| TC-094 | Data/concept drift and delayed ground-truth labels; `J/R/V/L=ALL` | Controlled changes in dataset composition and label arrival | E1,E8,E9 | A-AI,A-RES; detect approved measurable drift signals, qualify monitoring limits and gate continued use/revalidation | S3,S4 | REQ-AI,REQ-RES |
+| TC-095 | Training/serving skew and evaluation leakage; `J/R/L=ALL` | Independent preprocessing comparison and held-out site/time/object split audit | E1,E5,E8,E9 | A-AI,A-GOV; no disallowed split overlap; comparable features and independently reproduced quality before approval | S3,S7 | REQ-AI,REQ-GOV |
+| TC-096 | Training-data provenance, purpose and residency; `C/J/H=ALL` | Synthetic authorized/disallowed dataset lineage, withdrawal and transfer fixtures | E5,E8,E9 | A-GOV,A-AI; reject unapproved use/transfer; trace affected derived models and apply approved requalification/retirement policy, not assumed instant unlearning | S7 | REQ-GOV,REQ-AI |
+| TC-097 | Label/data integrity degradation; `J/X=ALL` | Declared bounded synthetic label inconsistencies and corrupted records in isolated evaluation | E1,E5,E8,E9 | A-DAT,A-AI; surface integrity/quality failure and block unqualified model promotion | S3,S7 | REQ-DAT,REQ-AI,REQ-GOV |
+| TC-098 | Missing/misaligned modalities at AI fusion; `J/X=ALL` | Labeled sensor dropout, different sample rates and alignment errors | E1,E3,E8 | A-AI,A-TRK,A-UNC; qualified modality-specific degradation or abstention, with no silent imputation as truth | S3,S4 | REQ-AI,REQ-SEN,REQ-UNC |
+| TC-099 | Correlated/duplicated evidence and ensemble disagreement; `J/G/X=ALL` | Replay shared-source duplicates and conflicting approved model outputs | E1,E5,E8 | A-AI,A-UNC; retain lineage and avoid treating correlated observations as independent certainty | S3 | REQ-AI,REQ-DAT,REQ-UNC |
+| TC-100 | Precision/runtime/hardware portability; `C/J/R=ALL` | Golden corpus on each approved CPU/accelerator/quantized runtime | E1,E8,E9 | A-AI; meet numerical validity and per-stratum quality bounds for each qualified artifact/runtime combination | S1,S3 | REQ-AI |
+| TC-101 | Model artifact approval/integrity and dependency mismatch; `J/H=ALL` | Test artifacts with invalid digest, missing approval or incompatible dependency manifest | E5,E8,E9 | A-AI,A-GOV; refuse activation; retain qualified version only if permitted and visibly identified | S3,S7 | REQ-AI,REQ-GOV |
+| TC-102 | AI canary/mixed-version rollout and rollback; `C/J/L=ALL` | Isolated approved rollout and deliberately failing evaluation fixture | E1,E4,E8,E9 | A-AI,A-RES,A-ID; bound quality regression, preserve versioned track lineage and restore qualified model consistently | S3,S4,S7 | REQ-AI,REQ-RES,REQ-ID |
+| TC-103 | Training versus inference/core resource contention; `C/B/J/Q=ALL` | Quota-limited training/evaluation jobs concurrent with synthetic service load | E2,E4,E7,E8 | A-AI,A-CORE,A-COM; enforce reservations and approved admission; training cannot starve priority communication/inference | S1,S2,S4 | REQ-AI,REQ-CORE,REQ-COM |
+| TC-104 | Retraining approval, reproducibility and regression gate; `J/L/H=ALL` | Versioned offline training pipeline with failed/missing approval fixtures | E1,E8,E9 | A-AI,A-GOV; reproduce approved evaluation within specified tolerance; no automatic production promotion after drift | S3,S7 | REQ-AI,REQ-GOV |
+| TC-105 | Distributed/federated training where implemented; `C/J/H=ALL` | Mock participant dropout, version mismatch and invalid update provenance | E5,E8,E9 | A-AI,A-GOV,A-RES; validate participant/update eligibility, bounded convergence criterion and privacy/residency policy | S3,S4,S7 | REQ-AI,REQ-GOV,REQ-RES |
+| TC-106 | AI/network-analytics feedback instability; bounded-control `J/M=ALL` | SIL policy loop with delayed/conflicting recommendations | E2,E4,E7,E8,E9 | A-CTL,A-COM,A-AI; meet approved stability/change-rate bounds; independent policy rejects unsafe oscillation | S2,S4,S5 | REQ-CTL,REQ-COM,REQ-AI |
+| TC-107 | Advisory-only AI and revoked write authority; `J/H=ALL` | Mock out-of-scope/expired network-control requests | E5,E6,E8,E9 | A-CTL,A-ID,A-SAF; deny unauthorized writes independently of AI; no real response/engagement interface | S5,S7 | REQ-CTL,REQ-ID,REQ-SAF |
+| TC-108 | Decision provenance and operator interpretation; `J/Q=ALL` | Recorded predictions with missing/conflicting explanation metadata | E1,E6,E8,E9 | A-AI,A-HUM,A-DAT; show model/version, age, uncertainty and evidence limits; no fabricated rationale | S3,S5 | REQ-AI,REQ-HUM,REQ-DAT |
+| TC-109 | Track/object/device identity correlation; `J/P/X/H=ALL` | Synthetic ID rotation, overlapping tracks, duplicate claims and UE changes | E1,E5,E7,E8 | A-ID,A-TRK,A-UNC; preserve uncertain associations and separate subscriber, claimed identity and physical track | S3,S7 | REQ-ID,REQ-SEN,REQ-UNC |
+| TC-110 | Optional generative assistant handling untrusted reports; applicable `J/H` | Benign test reports containing conflicting instructions and unsupported assertions | E5,E6,E8,E9 | A-DAT,A-HUM,A-CTL; treat reports as data, enforce independent permissions and never invent identification or response authority | S3,S5,S7 | REQ-DAT,REQ-HUM,REQ-CTL |
+| TC-111 | AI telemetry/drift monitor/evaluation service unavailable; `C/J/L=ALL` | Disable isolated monitoring endpoint or hold evaluation results | E4,E8,E9 | A-AI,A-RES; monitoring gap visible and approved continued-use/stop policy enforced; no assumed healthy quality | S3,S4 | REQ-AI,REQ-RES |
+| TC-112 | AI-domain shutdown, independent stop and qualified fallback; `C/J/L=ALL` | Isolated AI outage/stop with only approved fallback paths enabled | E1,E2,E4,E6,E8 | A-SAF,A-RES,A-COM,A-UNC; stop works without AI, preserve communication and report unavailable/degraded identification | S2,S4,S5 | REQ-SAF,REQ-RES,REQ-COM,REQ-UNC |
+
+### Device-RAN-core-AI compound failures and end-to-end assurance
+
+TC-113 through TC-128 test responsibility boundaries that component benchmarks miss. Apply these to supported modes/radios/devices and declared core/AI placements. Combined faults remain isolated, bounded and independently stoppable.
+
+| ID | Scenario and axis coverage | Safe stimulus | Observable evidence | Acceptance profile and case-specific outcome | Stop | Requirement |
+|---|---|---|---|---|---|---|
+| TC-113 | Observation-to-operator latency/freshness under concurrent load; `C/B/J/M/R=ALL` | Timestamped scene replay with device, RAN, transport, core, AI and mock consumer spans | E1,E2,E6,E7,E8 | A-TRK,A-AI,A-HUM,A-COM; meet end-to-end and per-hop budgets including queues/retries; a timely stale result fails | S2,S3,S5 | REQ-SEN,REQ-AI,REQ-HUM,REQ-COM |
+| TC-114 | AI-serving burst plus UE registration/session surge; `C/B/J/Q=ALL` | Concurrent bounded synthetic workloads on declared shared platform | E2,E4,E7,E8 | A-CORE,A-AI,A-COM; preserve approved isolation/priority and report rejected/expired work by class | S1,S2,S4 | REQ-CORE,REQ-AI,REQ-COM |
+| TC-115 | Core disconnection plus continued local observations; `C/J/U=ALL` | Network emulator partition with timestamped replay at RAN/device | E1,E4,E7,E8 | A-TRK,A-RES,A-UNC; only qualified local fallback runs; unavailable core AI is not reported as active | S3,S4 | REQ-SEN,REQ-RES,REQ-UNC |
+| TC-116 | Reconnection backlog plus changed model/policy; `C/B/J/L=ALL` | Release buffered replay after isolated update and outage | E1,E4,E7,E8,E9 | A-DAT,A-AI,A-CTL; validate age/version/authorization before replay; no retrospective live-looking decision or old command | S3,S4,S7 | REQ-DAT,REQ-AI,REQ-CTL |
+| TC-117 | Shared core/AI cluster, storage or region loss; `C/N/J=ALL` | Common-cause service-failure emulator with synthetic accepted work | E2,E4,E7,E8,E9 | A-CORE,A-RES,A-COM; demonstrate actual failure-domain independence or explicitly report correlated loss | S2,S4 | REQ-CORE,REQ-RES,REQ-COM |
+| TC-118 | Uncertain AI result plus failed operator delivery; `C/J/X=ALL` | Ambiguous replay and unavailable mock notification path | E1,E4,E6,E8 | A-UNC,A-HUM,A-SAF; retain uncertainty and visible delivery failure; no automation that bypasses human authority | S3,S5 | REQ-UNC,REQ-HUM,REQ-SAF |
+| TC-119 | Revocation during active inference/federation; `C/J/H=ALL` | Synthetic consent/authorization withdrawal with in-flight jobs and caches | E5,E7,E8,E9 | A-ID,A-GOV,A-CORE; enforce approved propagation deadline at result delivery and onward sharing, not only ingestion | S7 | REQ-ID,REQ-GOV,REQ-CORE |
+| TC-120 | Device/RAN timing/calibration loss plus AI confidence; `C/J/R/G=ALL` | Isolated health/clock faults with held-out replay | E1,E3,E7,E8 | A-RAD,A-AI,A-UNC; propagate invalidity end-to-end even when classifier score remains high | S3 | REQ-RAD,REQ-AI,REQ-UNC |
+| TC-121 | Tenant pressure plus core/AI scale-in/failover; `C/B/J/H=ALL` | Synthetic multi-tenant load with controlled isolated rescheduling | E2,E4,E7,E8,E9 | A-CORE,A-ID,A-AI; no cache/result/authority cross-binding and no hidden resource-budget breach | S1,S2,S4,S7 | REQ-CORE,REQ-ID,REQ-AI |
+| TC-122 | Model update plus radio/mode/core API transition; `C/J/M/R/L=ALL` | Supported directed transitions and incompatible version fixtures in SIL/HIL | E1,E3,E7,E8,E9 | A-AI,A-RAD,A-CORE,A-RES; block incompatible combinations and bound qualified rollback | S1,S3,S4 | REQ-AI,REQ-RAD,REQ-CORE,REQ-RES |
+| TC-123 | Stop/revocation during AI-driven network change; `C/J/L=ALL` | Mock change pending while independent stop or permission withdrawal arrives | E2,E6,E7,E9 | A-CTL,A-SAF,A-RES; stop/revocation precedence persists across retries, failover and restart | S2,S5,S7 | REQ-CTL,REQ-SAF,REQ-RES |
+| TC-124 | Recovery from mismatched core/model/data backups; `C/J/L=ALL` | Isolated restore from versioned synthetic snapshots with declared recovery objectives | E4,E5,E7,E8,E9 | A-CORE,A-AI,A-GOV,A-RES; validate consistency, revoked rights and accepted-work disposition before readiness | S3,S4,S7 | REQ-CORE,REQ-AI,REQ-GOV,REQ-RES |
+| TC-125 | Multi-site object handoff versus UE/session mobility; `C/G/J/U=ALL` | Labeled cross-site replay plus independent synthetic UE mobility | E1,E7,E8 | A-ID,A-TRK,A-AI; correlate only supported evidence; no duplicate authoritative object or subscriber-to-object identity shortcut | S3,S7 | REQ-ID,REQ-SEN,REQ-AI |
+| TC-126 | Core/AI privacy controls under evidence-store failure; `C/J/H=ALL` | Synthetic incident traces with unavailable audit/retention endpoint | E4,E5,E8,E9 | A-DAT,A-GOV,A-RES; apply approved deny/degrade rules, restrict emergency evidence and expose enforcement gaps | S3,S4,S7 | REQ-DAT,REQ-GOV,REQ-RES |
+| TC-127 | Long-duration core/AI churn and repeated degraded recovery; `C/B/J/L=ALL` | Approved-duration isolated jobs, sessions, updates and fault/recovery cycles | E2,E4,E7,E8,E9 | A-CORE,A-AI,A-RES,A-COM; bound leaks, queue growth, identity drift and quality/latency regressions over time | S1,S2,S3,S4 | REQ-CORE,REQ-AI,REQ-RES,REQ-COM |
+| TC-128 | Pre-approved multi-domain acceptance and operator handoff rehearsal; all applicable axes | Replay a versioned scenario pack with independent domain owners and mock responders | E1,E2,E3,E4,E5,E6,E7,E8,E9 | A-SEN,A-CORE,A-AI,A-COM,A-CTL,A-HUM,A-SAF,A-GOV plus every profile required by constituent instances; all cross-domain contracts pass; unresolved gaps explicit | S1,S2,S3,S4,S5,S7 | REQ-SEN,REQ-CORE,REQ-AI,REQ-COM,REQ-CTL,REQ-HUM,REQ-SAF,REQ-GOV |
+
 ## Coverage accounting and release gate
 
 Maintain a versioned coverage ledger using the instance fields above. A spreadsheet, test-management system, or structured data export is acceptable; this README is not an execution database.
 
-1. Freeze the supported configuration inventory and local requirements. Map source clauses only where actually applicable; explicitly distinguish normative requirements, recommendations, and local design choices.
+1. Freeze the supported configuration inventory, domain ownership/dependency map and local requirements, including core/AI placement and authority. Map source clauses only where actually applicable; explicitly distinguish normative requirements, recommendations, and local design choices.
 2. Expand each scenario over applicable axis values and all supported directed lifecycle/mode transitions. Record constraints for impossible or prohibited combinations and obtain independent review.
 3. Execute reference/boundary/single-fault cases, then a constrained pairwise interaction suite and risk-selected higher-order/common-cause cases. Do not describe the pairwise suite as exhaustive.
 4. For a literal exhaustive bounded-combination claim, enumerate and execute **every feasible combination in the declared finite domain**, including declared fault sequences and bounded timing/value partitions. State unmodeled continuous values and omitted dimensions. If that is infeasible, report partial/risk-based coverage instead.
 5. Link every requirement and expected observable outcome to instances, acceptance-profile versions, results, evidence, and residual-risk disposition. Independently validate the ground-truth and scoring method.
 6. Require review of failures, aborts, exclusions, missing evidence, uncertainty, and restoration results. A waiver does not convert an unexecuted or failed test into a pass.
-7. Rebaseline and rerun affected cases after changes to firmware, models, radio configuration, dependencies, approved limits, or operating environment.
+7. Rebaseline and rerun affected cases after changes to firmware, models, training/evaluation data, preprocessing, radio configuration, core policy/API, deployment placement, dependencies, approved limits, or operating environment.
+
+For the core/AI extension, cover `C/B/J/H` interactions with the radio/device axes and with each other. Include shared-dependency and authority-boundary failures, not only independent node outages. Establish a no-fault baseline, then approve bounded ramps/bursts/holds, single failures, selected compound failures and post-load recovery for each applicable instance. Never infer measured capacity from a catalogue or from a single unloaded inference benchmark.
+
+| Responsibility coverage obligation | Scenario linkage |
+|---|---|
+| Access/session/mobility and communication priority | TC-062 through TC-068, TC-083, TC-114, TC-125; retain TC-013 through TC-017 and TC-024 |
+| Sensing service lifecycle/exposure/state and recovery | TC-061, TC-069 through TC-084, TC-115 through TC-117, TC-124 |
+| AI data/model lifecycle and inference validity | TC-085 through TC-105, TC-111, TC-120, TC-122 |
+| Independent authority, uncertainty and operator notification | TC-106 through TC-112, TC-118, TC-123, TC-128; retain TC-041 through TC-050 |
+| Cross-domain identity, governance and common-cause resilience | TC-109, TC-113 through TC-128; retain TC-051 through TC-060 |
+
+These are coverage links, not execution evidence. Review individual cases and all applicable contracts even when a family has representative coverage.
 
 Report at least these separate measures; never collapse them into one unexplained percentage:
 
@@ -253,8 +414,10 @@ Report at least these separate measures; never collapse them into one unexplaine
 | Interaction coverage | Exercised feasible combinations at each declared interaction strength / all feasible combinations at that strength |
 | Fault/recovery coverage | Exercised declared fault effects, sequences and restoration outcomes / all applicable declared items |
 | Exclusion review | Reviewed exclusions / all proposed exclusions, with reasons and risk owners |
+| Cross-domain contract coverage | Contracts with reviewed end-to-end load/failure/recovery evidence / all applicable declared device-RAN-core-AI-consumer contracts |
+| AI qualification coverage | Qualified model/preprocessing/runtime/data-stratum combinations / all applicable approved combinations; report abstention, expiry and unsupported strata separately |
 
-**Current coverage:** not assessed. All TC-001 through TC-060 are templates awaiting configuration-specific instantiation, approval and execution. There are no measured pass rates or validated protection claims in this repository.
+**Current coverage:** not assessed. All 128 cases, TC-001 through TC-128, are templates awaiting configuration-specific instantiation, approval and execution. There are no measured pass rates, validated core capacities, qualified AI models or validated protection claims in this repository. The 68 added core/AI/end-to-end cases close catalogue gaps, not evidence or deployment gaps.
 
 Suggested claim format:
 
@@ -269,9 +432,25 @@ Source-to-case mappings and exact edition/clauses must be recorded in instance r
 - **SRC-IMT:** ITU-R Recommendation M.2160, *Framework and overall objectives of the future development of IMT for 2030 and beyond*: https://www.itu.int/rec/R-REC-M.2160. Framework context for integrated sensing and communication; not proof of implemented gNodeB features, radio conformance, or counter-drone performance.
 - **SRC-3GPP:** 3GPP TR 22.837, *Study on Integrated Sensing and Communication*: https://www.3gpp.org/ftp/Specs/archive/22_series/22.837/. Study context for use cases and requirements investigation. A Technical Report is not a normative Technical Specification and does not establish commercial implementation or interoperability.
 - **SRC-ETSI:** ETSI ISG ISAC deliverables portal: https://www.etsi.org/committee/isac. Consult the current published use-case, deployment, architecture and channel-modeling reports when qualifying the inventory. Record the exact document, edition and applicable clauses before using it as instance-level evidence; a Group Report is not a product certification.
+- **SRC-CORE:** 3GPP TS 23.501, *System architecture for the 5G System (5GS)*: https://www.etsi.org/deliver/etsi_ts/123500_123599/123501/; TS 23.502, *Procedures for the 5G System (5GS)*: https://www.etsi.org/deliver/etsi_ts/123500_123599/123502/; TS 23.503, *Policy and charging control framework for the 5G System (5GS)*: https://www.etsi.org/deliver/etsi_ts/123500_123599/123503/. Normative 5GS specifications for applicable architecture/procedures/policy, not finalized 6G architecture or automatic ISAC capability.
+- **SRC-ANALYTICS:** 3GPP TS 23.288, *Architecture enhancements for 5G System (5GS) to support network data analytics services*: https://www.etsi.org/deliver/etsi_ts/123200_123299/123288/. Normative analytics architecture in its applicable edition; NWDAF presence does not establish object-identification or response authority.
+- **SRC-SEC:** 3GPP TS 33.501, *Security architecture and procedures for 5G System*: https://www.etsi.org/deliver/etsi_ts/133500_133599/133501/. Normative security reference where applicable to the implemented 5GS interfaces; supplementary sensing/AI APIs need their own declared controls.
+- **SRC-ISAC-REQ:** 3GPP TS 22.137, *Integrated Sensing and Communication*: https://www.etsi.org/deliver/etsi_ts/122100_122199/122137/. Requirements-level source candidate; verify the selected published edition and scope before clause mapping. Stage-1 requirements do not alone define a deployable 6G core, AI hosting architecture, or conformance test suite.
+- **SRC-AI:** NIST AI 100-1, *Artificial Intelligence Risk Management Framework (AI RMF 1.0)*: https://doi.org/10.6028/NIST.AI.100-1. Voluntary AI risk-management framework supporting governance, measurement, monitoring and lifecycle review; not a telecom performance standard or model certification.
 
-**Source-verification status:** the research pass supplied candidate standards references, but independent retrieval of the ITU/3GPP/ETSI sources was unavailable in this session. Their current editions, release applicability and clause-level mappings remain verification prerequisites, not completed checks. No unverified release/date, normative compliance, or regulatory-authority claim is used as an acceptance criterion here.
+**Source-verification status:** the original research pass supplied candidate standards references, but independent retrieval of the ITU/3GPP/ETSI sources was unavailable in that pass. The core/AI extension adds search-located primary-source pointers, not a clause-level conformance review. Current editions, release applicability and clause-level mappings remain verification prerequisites, not completed checks. No unverified release/date, normative compliance, or regulatory-authority claim is used as an acceptance criterion here.
 
 Local traceability: TC-001 through TC-026 require REQ-SEN/REQ-RAD capability and performance requirements supplied by the actual system owner; this catalogue does not invent normative radio thresholds. TC-027 through TC-040 and TC-051 through TC-060 use SRC-RES/SRC-RISK as engineering guidance. TC-041 through TC-050 additionally require jurisdiction-specific aviation, spectrum, privacy and site permissions; no general reference substitutes for those approvals.
 
 SRC-IMT/SRC-3GPP/SRC-ETSI provide background for the mode/radio inventory and TC-001 through TC-026; they do not supply automatic pass/fail thresholds. Any normative claim must instead identify a verified applicable specification and product requirement. Aviation authorization, spectrum authorization, privacy compliance, and authority to take any response action are separate determinations.
+
+Core/AI source-family mapping:
+
+| Cases / requirements | Source families and limits |
+|---|---|
+| TC-061 through TC-084; REQ-CORE, REQ-COM, REQ-ID, REQ-CTL | SRC-CORE/SRC-SEC for applicable implemented 5GS contracts; SRC-ISAC-REQ for applicable sensing-service requirements only. Sensing-job and custom AI interfaces remain local contracts unless an applicable specification is verified. |
+| TC-072, TC-106, TC-111; analytics dependencies | SRC-ANALYTICS plus the actual consumer/AI/control contracts; no implied standard object classifier or closed-loop permission. |
+| TC-085 through TC-112; REQ-AI, REQ-UNC, REQ-GOV | SRC-AI/SRC-RISK/SRC-RES as lifecycle and resilience guidance, plus locally approved task-specific quality, identity and governance requirements. |
+| TC-113 through TC-128; cross-domain obligations | Applicable families above plus SRC-RES/SRC-RISK and reviewed end-to-end contracts; per-function conformity cannot substitute for end-to-end evidence. |
+
+This mapping is deliberately at source-family level. Each executable instance must identify actual applicable clauses or explicitly mark its requirement as a local engineering requirement. No reference establishes universal thresholds, exhaustive coverage, hostile intent, or authority to engage an aircraft.

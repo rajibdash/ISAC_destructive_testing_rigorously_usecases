@@ -89,10 +89,62 @@ These are coverage axes, not a claim that every combination is standardized, imp
 | Core load `B` | UE registrations; session churn; mobility; API requests; sensing jobs; subscriptions/consumers; data throughput; tenants/slices | Declare bounded baseline, burst, ramp, sustained, admission-limit and recovery load values separately; distinguish offered, admitted, rejected and completed work. |
 | AI configuration `J` | Enabled/unavailable; advisory/bounded network-control permission; model/preprocessing versions; inference runtime/precision; batch policy; single/multi-modal; optional distributed training or generative assistant | Inventory only implemented features; training, analytics, inference, fusion and control are separate capabilities. An excluded optional feature is not a passed case. |
 | Governance `H` | Authorized/revoked/expired identity; tenant/slice; data purpose, consent or other legal basis; retention; residency; model approval state | Use synthetic identities and approved fixtures; device authorization is separate from physical-object identity and response authority. |
+| Frequency profile `K` | `K-FR2-1`; `K-FR2-2`; `K-SUBTHZ`; mixed-band configuration with explicitly identified component profiles | Instantiate exact legal/supported carriers and configurations, not a single generic "mmWave" value. Apply the frequency-profile overlay below to every scenario. |
 
 For each radio, record model, firmware, sensing capability evidence, calibration procedure, supported axis values, clock source, observation format, uncertainty representation, health reporting, safe operating limits, and rollback procedure. Record simulated/prototype-only capabilities separately from deployed capabilities.
 
 For core and AI services, additionally record service owner, API/schema versions, caller permissions, dependencies, processing/storage locations, model/data lineage, resource reservations, failover/fencing rules, recovery objectives and approved degraded behavior. Apply relevant `M/R/X/N/U/L/V/Q/F` axes to the new core/AI cases as well as `C/B/J/H`; their interaction with radio and device conditions must not disappear from coverage accounting.
+
+## FR2/mmWave and sub-THz configuration overlay
+
+This overlay applies to **every existing case, TC-001 through TC-128**, including core/AI/governance cases, and to TC-129 through TC-152 added below. Frequency-specific tests supplement, not replace, the original requirements and safety controls. The 128-case core/AI baseline is part of this update's branch; the linked main revision `1296dc12edd08d1e1ccab68d20d35e65a14fe63e` contained the earlier 60-case catalogue.
+
+### Frequency classification and implementation status
+
+| Profile | Classification | Qualification boundary |
+|---|---|---|
+| `K-FR2-1` | NR FR2-1 range: 24.25-52.6 GHz in applicable NR specifications | The range is not a continuous allocation or a guarantee of product support. Select the actual NR operating band, carrier, bandwidth, numerology and device/BS capability from the applicable specification edition and regional authorization. |
+| `K-FR2-2` | NR FR2-2 range: 52.6-71 GHz in applicable NR specifications | Qualify separately from FR2-1; do not inherit waveform, channel access, beam, RF or sensing capability merely from the FR2 label. Record any applicable shared-spectrum/channel-access obligations. |
+| `K-SUBTHZ` | Experimental sub-THz radio with explicitly declared frequency interval and waveform | "Sub-THz" has no single project-independent boundary here. An implementation may, for example, declare a subset of 100-300 GHz; this is a naming example, not a selected carrier, permission or NR band. Describe any other experimental interval explicitly rather than calling it FR2. |
+| Mixed-band | Enumerated FR1/FR2/sub-THz components, if actually implemented | Declare communication and sensing carriers separately, their timing/frame relation, approved inter-band transitions and fallback capabilities. No automatic transfer of calibration, object signatures, AI qualification or coverage between bands. |
+
+"mmWave" is a broad descriptive term, not synonymous with NR FR2; conversely, the conventional 30 GHz millimeter-wave boundary does not change the NR FR2-1 definition. A sub-THz prototype is not automatically a 3GPP NR radio, standardized 6G feature, or interoperable ISAC implementation. Exact standards editions and band tables remain qualification prerequisites.
+
+### Mandatory configuration manifest
+
+For each `K` profile, declare a finite supported set and justified boundary partitions for the following fields. Record `not implemented`, `simulation only`, `lab prototype`, or `qualified hardware` where appropriate. No actual carrier, hardware support or operating permission is claimed by this catalogue.
+
+| Manifest group | Values and dependencies to record |
+|---|---|
+| Spectrum and waveform | Actual communication and sensing frequencies/bands; occupied/usable bandwidth; waveform and sample rate; supported numerology/duplex; carrier aggregation if implemented; channel-access constraints and authorization. |
+| Front end and aperture | Tx/Rx chains; antenna/panel arrangement; analog/hybrid/digital beamforming; codebook/version; supported steering envelope; polarization; aperture-dependent near/far-field model validity; enclosure/radome and mounting configuration. |
+| Hardware impairments | Qualified phase-noise/frequency-offset model; LO/multiplier and clock dependencies; PA compression/linearity; receiver noise/dynamic range; ADC/DAC precision/clipping; IQ imbalance; frequency-dependent gain/delay; permitted thermal derating. |
+| Calibration and measurement | Frequency/beam/polarization-dependent calibration; phase coherence and timing uncertainty; instrumentation and converter/extender versions; cable/fixture losses; chamber quiet-zone/near-field transformation validity and measurement uncertainty. |
+| Propagation and object data | Qualified channel/target-scattering model or authorized measurements per band; blockage, weather/material attenuation and multipath partitions; bistatic/monostatic geometry; model frequency/distance/environment validity. |
+| Device and service behavior | Supported UE/panel orientations and power states; beam acquisition/tracking/recovery; configured reference/calibration gaps; sensing observability during beam sweeps; per-band data rates, queue budgets and core transport dependencies. |
+| AI and fusion | Per-band training/evaluation provenance and held-out splits; preprocessing/model validity; uncertainty calibration; cross-band association/registration; missing-band behavior and qualified fallback. |
+| Limits and safety | Locally authorized emission/exposure, facility, thermal and electrical limits; independent monitors; instrument range; safe shutdown and qualified rollback. No RF output without approved facilities and authorization. |
+
+Conducted tests alone do not characterize an antenna array, beam management, enclosure, or radiated exposure. Use an appropriately qualified shielded OTA chamber where necessary. At sub-THz, unqualified converters, chamber geometry or calibration can dominate the result; mark such measurements blocked rather than claiming hardware validation from a channel simulation. Weather/material and target-scattering models must be validated in their intended frequency/geometry domain, not extrapolated automatically from FR1 or FR2.
+
+### Per-case applicability and inheritance rules
+
+For **every TC-001 through TC-128**, create an applicability entry for every declared exact frequency configuration, including unsupported configurations under review. Its disposition must be `execute`, `reuse-reviewed-evidence`, or `excluded-with-reviewed-rationale`; the resulting instance still uses the result states in the execution contract. Unsupported hardware is excluded or simulation-only as declared, never a hardware pass.
+
+An executable instance inherits its original stimulus constraints, requirement families, acceptance profiles, evidence and stops. Add `A-HF`, `REQ-HF` and `E10` wherever RF/beam/channel effects or their downstream consequences are exercised. Frequency-independent logic tests may reuse evidence only with approved equivalence of code/configuration, interfaces, load envelope and dependencies. Link that evidence separately to each affected configuration; count one execution, not many invented executions. Re-execute when band-dependent event rates, precision, model versions, authorization or failure paths invalidate equivalence.
+
+| Original cases: complete partition of TC-001 through TC-128 | Required FR2/sub-THz overlay |
+|---|---|
+| TC-001 through TC-012 | Per-band observability, scattering/occlusion/multipath and environmental validity; beam-dependent observation gaps; score misses, confusion and uncertainty independently per band. |
+| TC-013 through TC-026 | Supported bandwidth/numerology/resource/beam policies, array/duplex health, calibration and multistatic coherence; no presumed FR2-to-sub-THz mode portability. |
+| TC-027 through TC-040 | Per-band sample/feature throughput, timestamps/units, quantization, thermal/compute/transport pressure and restart validity; repeat faults using declared band-specific data envelopes. |
+| TC-041 through TC-050 | Band-specific permissions, exposure/facility approval, operator visibility of band/beam uncertainty and interlocks. Apply live cases only with separately authorized qualified hardware; otherwise record the live instance excluded/blocked and retain isolated logic tests. |
+| TC-051 through TC-060 | Combine band-valid propagation/beam effects with declared faults and load; restore calibration, beam state and service validity before reporting recovery. |
+| TC-061 through TC-084 | Frequency/capability-aware admission, per-band resource/data envelopes, beam-recovery event bursts, transport/policy/fallback lifecycle and explicit rejection of unsupported sub-THz service requests. |
+| TC-085 through TC-112 | Per-band datasets/features, hardware-impairment strata, unknown rejection/calibration and model/runtime versions; reject unqualified cross-band AI transfer and control authority. |
+| TC-113 through TC-128 | End-to-end age/quality under beam reacquisition, band changes and shared-failure conditions; cross-band identity lineage, core/AI governance and independent stop remain mandatory. |
+
+This table establishes a coverage obligation for every original ID, not completed executions. Finite frequency, beam, hardware-impairment and environment partitions must be declared in the ledger before making a bounded exhaustive claim; continuous physical variation cannot be exhausted by naming three profiles.
 
 ## Traceability and execution contract
 
@@ -104,7 +156,10 @@ Minimum instance record:
 instance_id: TC-001/<configuration-id>/<condition-id>/<repetition-id>
 requirement_ids: approved local requirement identifiers
 source_ids: bibliography identifiers + exact applicable clauses, if any
-configuration: M/G/P/R/X/D/W/N/U/L/V/Q/F/C/B/J/H values + software/model versions
+configuration: M/G/P/R/X/D/W/N/U/L/V/Q/F/C/B/J/H/K values + software/model versions
+frequency_manifest: exact K configuration + waveform/array/calibration/channel versions
+frequency_applicability: execute | reuse-reviewed-evidence | excluded-with-reviewed-rationale
+evidence_reuse: original run + equivalence review + reviewer + limits, if applicable
 ownership_and_path: responsible domain + dependency graph + end-to-end trace path
 load_profile: offered/admitted/completed/rejected work + ramp/burst/hold/recovery limits
 ai_contract: applicable model/data/feature versions + authority + expiry + fallback
@@ -141,6 +196,7 @@ These IDs organize local requirements; they are not claims of conformance to a s
 | `REQ-AI` | Qualified AI performance, abstention, serving timeliness, model compatibility and lifecycle integrity |
 | `REQ-CTL` | Independently validated, bounded and reversible permitted network-control recommendations/actions |
 | `REQ-GOV` | Purpose-limited data/model use, residency, retention, revocation and accountable approvals |
+| `REQ-HF` | Frequency-qualified radio/beam/channel operation, calibrated OTA evidence, bounded degradation and valid downstream core/AI behavior |
 
 ### Acceptance profiles
 
@@ -162,6 +218,7 @@ All limits must be set **before execution** by accountable system/safety owners 
 | `A-AI` | Per-stratum/class precision/recall, unknown rejection, calibration, uncertainty coverage, inference tail latency and output age, numerical validity and approved model/preprocessing compatibility; meet approved quality/timeliness bounds or visibly abstain. |
 | `A-CTL` | Policy-check outcomes, action scope/expiry, change rate, stability, rollback and stop precedence; only independently authorized bounded network changes pass, with no autonomous engagement path. |
 | `A-GOV` | Data/model provenance and approval, purpose/consumer restrictions, storage/transfer locations, revocation propagation and retention/deletion completion; comply with approved policy and report unavailable enforcement explicitly. |
+| `A-HF` | Per-frequency/beam configuration calibration residuals, measurement uncertainty, beam acquisition/recovery time and duty cycle, RF quality/dynamic range, sensing validity and approved emissions/exposure/thermal limits; meet approved bounds or declare unavailable/degraded and inhibit invalid outputs. Applicable RF conformance alone is insufficient to pass ISAC quality requirements. |
 
 Specify units, scoring denominators, matching rules, warm-up periods, measurement uncertainty, repetitions, confidence intervals, missing-data policy, and acceptance confidence in the approved profile. Separate detection, classification, and operator notification latency; an average must not hide a required tail-latency or worst-stratum failure.
 
@@ -182,6 +239,7 @@ Evidence must use synchronized timestamps with measured clock uncertainty, indep
 | `E7` | Synthetic subscriber/session/job/tenant identifiers, core API traces, policy/admission decisions, discovery/routing state, load counters and distributed trace spans |
 | `E8` | Approved evaluation dataset/split hashes, preprocessing/model/runtime versions, inference timestamps and outputs, quality/calibration/abstention scores, drift and resource telemetry |
 | `E9` | Model/data approvals and lineage, deployment/rollback history, control-policy decisions, access/revocation/retention/residency evidence and recovery reconciliations |
+| `E10` | Exact frequency/waveform/array manifest; beam state and observation-gap logs; chamber/instrument calibration and uncertainty; per-band channel/model/scene provenance; permitted RF/exposure/thermal readings and hardware/simulation status |
 
 Every instance needs a monitored trigger and named stop owner. The safety plan must specify what happens if the test system itself becomes unresponsive.
 
@@ -379,12 +437,43 @@ TC-113 through TC-128 test responsibility boundaries that component benchmarks m
 | TC-127 | Long-duration core/AI churn and repeated degraded recovery; `C/B/J/L=ALL` | Approved-duration isolated jobs, sessions, updates and fault/recovery cycles | E2,E4,E7,E8,E9 | A-CORE,A-AI,A-RES,A-COM; bound leaks, queue growth, identity drift and quality/latency regressions over time | S1,S2,S3,S4 | REQ-CORE,REQ-AI,REQ-RES,REQ-COM |
 | TC-128 | Pre-approved multi-domain acceptance and operator handoff rehearsal; all applicable axes | Replay a versioned scenario pack with independent domain owners and mock responders | E1,E2,E3,E4,E5,E6,E7,E8,E9 | A-SEN,A-CORE,A-AI,A-COM,A-CTL,A-HUM,A-SAF,A-GOV plus every profile required by constituent instances; all cross-domain contracts pass; unresolved gaps explicit | S1,S2,S3,S4,S5,S7 | REQ-SEN,REQ-CORE,REQ-AI,REQ-COM,REQ-CTL,REQ-HUM,REQ-SAF,REQ-GOV |
 
+### FR2/mmWave and experimental sub-THz qualification and stress
+
+TC-129 through TC-152 apply to each declared supported `K` configuration and its applicable `D/W/G/R/V/Q/C/J` combinations. All RF stimuli remain simulated, conducted, or inside qualified shielded facilities. The cases provide no field interference, targeting, engagement or attack procedures. `A-HF` adds frequency-specific limits; original sensing, communication, AI and safety acceptance is still required.
+
+| ID | Scenario and axis coverage | Safe stimulus | Observable evidence | Acceptance profile and case-specific outcome | Stop | Requirement |
+|---|---|---|---|---|---|---|
+| TC-129 | Blockage and intermittent observability; `K/G/V=ALL` | Qualified channel replay/emulator with labeled blocked intervals | E1,E3,E10 | A-HF,A-SEN,A-TRK,A-UNC; measure per-band misses/gaps and declare unobservable rather than absent-object state | S1,S3 | REQ-HF,REQ-SEN,REQ-UNC |
+| TC-130 | Beam acquisition, tracking, misalignment and recovery; `K/W/R/Q=ALL` | SIL or shielded OTA reference scene with approved beam-state/orientation changes | E1,E2,E4,E10 | A-HF,A-TRK,A-COM; bound acquisition/recovery and observation gaps without hiding communication resource cost | S1,S2,S3 | REQ-HF,REQ-SEN,REQ-COM |
+| TC-131 | Wideband beam squint and frequency-dependent array response; `K/D/W=ALL` | Qualified wideband array model or shielded calibrated measurement | E1,E3,E10 | A-HF,A-SEN; score across approved bandwidth/steering partitions; report unsupported angular/frequency regions | S1,S3 | REQ-HF,REQ-RAD,REQ-SEN |
+| TC-132 | Near/far-field model validity and focusing assumptions; `K/G/R=ALL` | Qualified spherical/planar-wave reference fixtures in simulator or suitable chamber | E1,E3,E10 | A-HF,A-SEN,A-UNC; use aperture/frequency-valid models and uncertainty; no far-field claim outside qualified domain | S1,S3 | REQ-HF,REQ-RAD,REQ-UNC |
+| TC-133 | Frequency-dependent atmospheric/weather attenuation; `K/V=ALL` | Validated gas, precipitation and cloud/fog models or authorized reference recordings | E1,E3,E10 | A-HF,A-SEN,A-COM; score approved strata separately, enforce model validity and expose degraded coverage | S1,S2,S3 | REQ-HF,REQ-SEN,REQ-COM |
+| TC-134 | Material/roughness/polarization and target-scattering variability; `K/G/V=ALL` | Authorized measured or qualified synthetic scattering/multipath scenes | E1,E3,E10 | A-HF,A-SEN,A-UNC; no fixed cross-band reflectivity/identity assumption; quantify model uncertainty | S1,S3 | REQ-HF,REQ-SEN,REQ-UNC |
+| TC-135 | Radome/enclosure loss and mounting variation; `K/R/L=ALL` | Qualified enclosure-loss fixtures or model; no damage or unsafe contamination | E1,E3,E10 | A-HF,A-RAD,A-RES; detect configuration/calibration invalidity and require requalification where necessary | S1,S3,S4 | REQ-HF,REQ-RAD,REQ-RES |
+| TC-136 | Phase noise, frequency offset and LO/multiplier impairments; `K/D/G=ALL` | Approved impairment emulator or shielded test equipment | E1,E3,E10 | A-HF,A-RAD,A-SEN; quantify coherence/sensing degradation; invalidate estimates beyond qualified limits | S1,S3 | REQ-HF,REQ-RAD,REQ-SEN |
+| TC-137 | PA/receiver nonlinearity, dynamic range and self-leakage; `K/R/D=ALL` | Bounded conducted/shielded impairment fixtures, never damaging drive levels | E1,E2,E3,E10 | A-HF,A-SEN,A-COM; expose compression/saturation and comply with approved RF limits | S1,S2,S3 | REQ-HF,REQ-RAD,REQ-SEN,REQ-COM |
+| TC-138 | Converter precision, clipping and usable bandwidth; `K/D/J=ALL` | Golden samples plus approved ADC/DAC/IQ/filter impairment models | E1,E3,E8,E10 | A-HF,A-SEN,A-AI; qualify each precision/bandwidth pipeline and preserve uncertainty through feature extraction | S1,S3 | REQ-HF,REQ-SEN,REQ-AI |
+| TC-139 | Array element/panel fault and calibration drift; `K/R/W=ALL` | Software/HIL element-health or calibration metadata fault | E1,E3,E4,E10 | A-HF,A-RAD,A-RES; declare reduced aperture/coverage and revalidate calibration before healthy state | S1,S3,S4 | REQ-HF,REQ-RAD,REQ-RES |
+| TC-140 | Thermal/power derating with beam/sensing workload; `K/R/Q=ALL` | Simulated health inputs and bounded isolated workload; no deliberate overheating | E2,E3,E4,E10 | A-HF,A-COM,A-RES; approved derating must propagate changed resource/coverage capability to RAN/core consumers | S1,S2,S4 | REQ-HF,REQ-COM,REQ-RES |
+| TC-141 | Cross-radio timing/phase coherence and sample-clock mismatch; `K/G/N=ALL` | Isolated clock emulator with per-node uncertainty records | E1,E3,E7,E10 | A-HF,A-RAD,A-TRK; only claim coherent fusion when qualified; otherwise use qualified noncoherent mode or invalidate | S3,S4 | REQ-HF,REQ-RAD,REQ-SEN |
+| TC-142 | Waveform ambiguity and observation-sampling gaps; `K/D/W=ALL` | Labeled synthetic scenes spanning approved resolution/ambiguity partitions | E1,E2,E3,E10 | A-HF,A-SEN,A-TRK; measure ambiguity and uncertainty separately from communication quality; no bandwidth-only accuracy guarantee | S1,S2,S3 | REQ-HF,REQ-SEN,REQ-UNC |
+| TC-143 | OTA instrumentation/chamber/converter validity; `K/R=ALL` | Calibrated reference fixtures and test instrument fault/status flags | E3,E4,E10 | A-HF,A-RAD; valid calibration/quiet-zone/transform and uncertainty required; unqualified setup blocks hardware acceptance | S1,S3 | REQ-HF,REQ-RAD |
+| TC-144 | UE panel/orientation, power-state and mobility dependencies; `K/R/U/L=ALL` | UE/panel emulator or shielded OTA fixture with synthetic sessions | E1,E2,E3,E10 | A-HF,A-COM,A-TRK; characterize device versus network-only sensing and beam recovery independently | S1,S2,S3 | REQ-HF,REQ-COM,REQ-SEN |
+| TC-145 | Cross-band fallback, carrier/panel transition and hysteresis; mixed `K/M/L` | Approved isolated transition graph and unavailable-band fixtures | E1,E2,E4,E7,E10 | A-HF,A-COM,A-TRK,A-RES; no assumed sensing continuity on communication fallback; bound oscillation and stale-track carryover | S1,S2,S3,S4 | REQ-HF,REQ-COM,REQ-SEN,REQ-RES |
+| TC-146 | AI cross-band domain shift and hardware signatures; `K/J/R/V=ALL` | Independent per-band held-out corpora and wrong-band model fixtures | E1,E8,E9,E10 | A-HF,A-AI,A-UNC; reject unqualified model/preprocessing transfer and meet per-band quality/abstention criteria | S3,S7 | REQ-HF,REQ-AI,REQ-UNC |
+| TC-147 | Band-dependent data/beam-event load on core/AI; `K/B/C/J/Q=ALL` | Bounded synthetic sample/feature streams and beam-recovery event bursts | E2,E4,E7,E8,E10 | A-HF,A-CORE,A-AI,A-COM; separate actual event/data rates from RF bandwidth and preserve approved end-to-end budgets | S1,S2,S3,S4 | REQ-HF,REQ-CORE,REQ-AI,REQ-COM |
+| TC-148 | Mixed-band fusion, registration and identity lineage; mixed `K/G/X/J` | Time/frame-labeled multi-band replay with dropout/duplicate tracks | E1,E3,E5,E8,E10 | A-HF,A-ID,A-TRK,A-UNC; prevent cross-band double-counting or identity shortcuts and retain correlated uncertainty | S3,S7 | REQ-HF,REQ-ID,REQ-SEN,REQ-UNC |
+| TC-149 | Spectrum permission, exposure and containment interlocks; `K/R/H=ALL` | Mock permission/limit withdrawal and instrument status in approved isolated facility | E3,E6,E9,E10 | A-HF,A-SAF,A-GOV; independent RF inhibit on invalid permission/monitor state; never exceed limits to test protection | S1,S5,S7 | REQ-HF,REQ-SAF,REQ-GOV |
+| TC-150 | Band-specific propagation loss plus beam fault plus core/AI contention; applicable `K/V/F/C/J/Q` | Qualified combined emulator faults and bounded isolated workload | E1,E2,E3,E4,E7,E8,E10 | A-HF,A-SEN,A-COM,A-AI,A-RES; uncertainty and degraded state propagate despite shared load; no falsely healthy fused result | S1,S2,S3,S4 | REQ-HF,REQ-SEN,REQ-COM,REQ-AI,REQ-RES |
+| TC-151 | Restart/restore after band or front-end change; `K/R/J/L=ALL` | Isolated restore with mismatched calibration/beam/model artifacts | E1,E3,E4,E8,E9,E10 | A-HF,A-RAD,A-AI,A-RES; validate matching radio/calibration/model manifest before readiness; rollback if incompatible | S1,S3,S4,S7 | REQ-HF,REQ-RAD,REQ-AI,REQ-RES |
+| TC-152 | Per-profile end-to-end qualification and evidence closure; `K=ALL` | Replay each approved band-specific acceptance pack with independent reviewers | E1,E2,E3,E4,E5,E6,E7,E8,E9,E10 | A-HF plus all constituent profiles; every original-case/profile entry has reviewed disposition and traceable evidence; no simulated result labeled hardware pass | S1,S2,S3,S4,S5,S7 | REQ-HF,REQ-SEN,REQ-COM,REQ-CORE,REQ-AI,REQ-SAF |
+
 ## Coverage accounting and release gate
 
 Maintain a versioned coverage ledger using the instance fields above. A spreadsheet, test-management system, or structured data export is acceptable; this README is not an execution database.
 
 1. Freeze the supported configuration inventory, domain ownership/dependency map and local requirements, including core/AI placement and authority. Map source clauses only where actually applicable; explicitly distinguish normative requirements, recommendations, and local design choices.
-2. Expand each scenario over applicable axis values and all supported directed lifecycle/mode transitions. Record constraints for impossible or prohibited combinations and obtain independent review.
+2. Expand each scenario over applicable axis values and all supported directed lifecycle/mode/band transitions. Apply the `K` overlay to every case, including original cases without `K` in their row text. Record constraints for impossible or prohibited combinations and obtain independent review.
 3. Execute reference/boundary/single-fault cases, then a constrained pairwise interaction suite and risk-selected higher-order/common-cause cases. Do not describe the pairwise suite as exhaustive.
 4. For a literal exhaustive bounded-combination claim, enumerate and execute **every feasible combination in the declared finite domain**, including declared fault sequences and bounded timing/value partitions. State unmodeled continuous values and omitted dimensions. If that is infeasible, report partial/risk-based coverage instead.
 5. Link every requirement and expected observable outcome to instances, acceptance-profile versions, results, evidence, and residual-risk disposition. Independently validate the ground-truth and scoring method.
@@ -403,6 +492,10 @@ For the core/AI extension, cover `C/B/J/H` interactions with the radio/device ax
 
 These are coverage links, not execution evidence. Review individual cases and all applicable contracts even when a family has representative coverage.
 
+For FR2/sub-THz, maintain an entry for every original-case/exact-frequency-configuration pair and every applicable added-case/configuration pair. State feasible counts after reviewed constraints, not `128 x 3` as a presumed hardware test count. Partition by approved carriers, bandwidths, beam/aperture states, propagation conditions, impairments, modes and core/AI contracts. Record the base case, all overlay conditions, execution/evidence-reuse disposition, original run identifier, reviewers, missing evidence and residual risk. Reused logic evidence does not establish independent RF/OTA qualification.
+
+Report simulated, conducted, shielded OTA and authorized benign live evidence separately. A configuration with only simulated support cannot be described as hardware-qualified, and one passed FR2-1 configuration cannot close FR2-2 or sub-THz coverage. If no approved hardware/permission exists, show the blocked/excluded hardware and live instances rather than silently dropping the profile.
+
 Report at least these separate measures; never collapse them into one unexplained percentage:
 
 | Measure | Numerator / denominator |
@@ -416,8 +509,10 @@ Report at least these separate measures; never collapse them into one unexplaine
 | Exclusion review | Reviewed exclusions / all proposed exclusions, with reasons and risk owners |
 | Cross-domain contract coverage | Contracts with reviewed end-to-end load/failure/recovery evidence / all applicable declared device-RAN-core-AI-consumer contracts |
 | AI qualification coverage | Qualified model/preprocessing/runtime/data-stratum combinations / all applicable approved combinations; report abstention, expiry and unsupported strata separately |
+| Frequency-overlay disposition completeness | Reviewed case/exact-frequency-configuration entries / all required entries, including reviewed exclusions and separately counted evidence reuse |
+| Per-frequency execution and qualification | Actual passed/failed/blocked/aborted/not-run applicable instances per exact configuration, with simulation/conducted/OTA/live evidence separated; no reuse inflated into extra executions |
 
-**Current coverage:** not assessed. All 128 cases, TC-001 through TC-128, are templates awaiting configuration-specific instantiation, approval and execution. There are no measured pass rates, validated core capacities, qualified AI models or validated protection claims in this repository. The 68 added core/AI/end-to-end cases close catalogue gaps, not evidence or deployment gaps.
+**Current coverage:** not assessed. All 152 cases, TC-001 through TC-152, are templates awaiting configuration-specific instantiation, approval and execution. The original 128 cases require frequency-overlay review, and 24 additional cases address high-frequency qualification. There are no measured pass rates, validated core capacities, qualified AI models, qualified FR2/sub-THz configurations or validated protection claims in this repository. Catalogue additions close design-scope gaps, not evidence or deployment gaps.
 
 Suggested claim format:
 
@@ -437,8 +532,11 @@ Source-to-case mappings and exact edition/clauses must be recorded in instance r
 - **SRC-SEC:** 3GPP TS 33.501, *Security architecture and procedures for 5G System*: https://www.etsi.org/deliver/etsi_ts/133500_133599/133501/. Normative security reference where applicable to the implemented 5GS interfaces; supplementary sensing/AI APIs need their own declared controls.
 - **SRC-ISAC-REQ:** 3GPP TS 22.137, *Integrated Sensing and Communication*: https://www.etsi.org/deliver/etsi_ts/122100_122199/122137/. Requirements-level source candidate; verify the selected published edition and scope before clause mapping. Stage-1 requirements do not alone define a deployable 6G core, AI hosting architecture, or conformance test suite.
 - **SRC-AI:** NIST AI 100-1, *Artificial Intelligence Risk Management Framework (AI RMF 1.0)*: https://doi.org/10.6028/NIST.AI.100-1. Voluntary AI risk-management framework supporting governance, measurement, monitoring and lifecycle review; not a telecom performance standard or model certification.
+- **SRC-NR-RF:** 3GPP TS 38.104, *NR; Base Station (BS) radio transmission and reception*: https://www.etsi.org/deliver/etsi_ts/138100_138199/138104/; TS 38.101-2, *NR; User Equipment (UE) radio transmission and reception; Part 2: Range 2 Standalone*: https://www.etsi.org/deliver/etsi_ts/138100_138199/13810102/. Normative NR RF references in the applicable edition for frequency ranges, operating bands and supported configurations; no automatic ISAC or sub-THz conformance.
+- **SRC-NR-OTA:** 3GPP TS 38.141-2, *NR; Base Station (BS) conformance testing; Part 2: Radiated conformance testing*: https://www.etsi.org/deliver/etsi_ts/138100_138199/13814102/; TS 38.521-2, *NR; User Equipment (UE) conformance specification; Radio transmission and reception; Part 2: Range 2 standalone*: https://www.etsi.org/deliver/etsi_ts/138500_138599/13852102/. Applicable radio conformance methods, not a complete sensing/AI qualification suite; use separate approved methods for experimental hardware outside their scope.
+- **SRC-PROP:** ITU-R P.676, atmospheric gas attenuation: https://www.itu.int/rec/R-REC-P.676/en; P.838, specific attenuation model for rain: https://www.itu.int/rec/R-REC-P.838/en; P.840, clouds/fog attenuation: https://www.itu.int/rec/R-REC-P.840/en. Propagation-model references: verify edition, frequency/environment validity and uncertainty. These models alone do not characterize target scattering, all multipath, hardware performance or end-to-end protection.
 
-**Source-verification status:** the original research pass supplied candidate standards references, but independent retrieval of the ITU/3GPP/ETSI sources was unavailable in that pass. The core/AI extension adds search-located primary-source pointers, not a clause-level conformance review. Current editions, release applicability and clause-level mappings remain verification prerequisites, not completed checks. No unverified release/date, normative compliance, or regulatory-authority claim is used as an acceptance criterion here.
+**Source-verification status:** the original research pass supplied candidate standards references, but independent retrieval of the ITU/3GPP/ETSI sources was unavailable in that pass. The core/AI and frequency extensions add search-located primary-source pointers, not a clause-level conformance review. Current editions, release applicability and clause-level mappings remain verification prerequisites, not completed checks. No unverified release/date, normative compliance, or regulatory-authority claim is used as an acceptance criterion here.
 
 Local traceability: TC-001 through TC-026 require REQ-SEN/REQ-RAD capability and performance requirements supplied by the actual system owner; this catalogue does not invent normative radio thresholds. TC-027 through TC-040 and TC-051 through TC-060 use SRC-RES/SRC-RISK as engineering guidance. TC-041 through TC-050 additionally require jurisdiction-specific aviation, spectrum, privacy and site permissions; no general reference substitutes for those approvals.
 
@@ -452,5 +550,6 @@ Core/AI source-family mapping:
 | TC-072, TC-106, TC-111; analytics dependencies | SRC-ANALYTICS plus the actual consumer/AI/control contracts; no implied standard object classifier or closed-loop permission. |
 | TC-085 through TC-112; REQ-AI, REQ-UNC, REQ-GOV | SRC-AI/SRC-RISK/SRC-RES as lifecycle and resilience guidance, plus locally approved task-specific quality, identity and governance requirements. |
 | TC-113 through TC-128; cross-domain obligations | Applicable families above plus SRC-RES/SRC-RISK and reviewed end-to-end contracts; per-function conformity cannot substitute for end-to-end evidence. |
+| TC-001 through TC-128 frequency overlay; TC-129 through TC-152; REQ-HF | SRC-NR-RF/SRC-NR-OTA for in-scope implemented NR configurations; SRC-PROP only within verified model validity. Experimental sub-THz needs independently approved hardware/channel/OTA requirements. Retain all original case source mappings and core/AI guidance. |
 
 This mapping is deliberately at source-family level. Each executable instance must identify actual applicable clauses or explicitly mark its requirement as a local engineering requirement. No reference establishes universal thresholds, exhaustive coverage, hostile intent, or authority to engage an aircraft.

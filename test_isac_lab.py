@@ -24,6 +24,14 @@ class LabTests(unittest.TestCase):
             self.assertLessEqual(metrics["peak_queue"], metrics["queue_capacity"])
             self.assertLessEqual(metrics["final_queue"], metrics["queue_capacity"])
 
+    def test_overload_window_ends_and_queue_recovers(self):
+        for name in ("communication", "edge_overload", "sabotage"):
+            short = run_scenario(name, Config(fault_duration=1))["metrics"]
+            longer = run_scenario(name, Config(fault_duration=3))["metrics"]
+            self.assertEqual(short["final_queue"], 0)
+            self.assertEqual(longer["final_queue"], 0)
+            self.assertGreater(longer["sensing_dropped"], short["sensing_dropped"])
+
     def test_redundancy_and_clock_exclusion(self):
         for name in ("node_dropout", "clock_failure"):
             result = run_scenario(name, Config(fault_duration=20))

@@ -105,7 +105,8 @@ def run_scenario(name, config=None):
         # Abstract radio units: reserve voice and data before admitting sensing.
         voice, data, capacity = 10, 50, 100
         communication_dropped += max(0, voice + data - capacity)
-        requested = config.sensing_load if name in (
+        fault_active = 3 <= step < 3 + config.fault_duration
+        requested = config.sensing_load if fault_active and name in (
             "communication", "edge_overload", "sabotage"
         ) else 8
         admitted = min(requested, capacity - voice - data)
@@ -121,7 +122,6 @@ def run_scenario(name, config=None):
         predicted = None if position is None else tuple(
             position[axis] + velocity[axis] for axis in range(3)
         )
-        fault_active = 3 <= step < 3 + config.fault_duration
         observations = []
         for node in range(4):
             if fault_active and (

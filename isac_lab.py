@@ -6,7 +6,7 @@ import json
 import math
 import random
 
-
+# These are basic scenarios
 SCENARIOS = (
     "baseline",
     "communication",

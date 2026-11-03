@@ -54,15 +54,15 @@ Solid arrows are a **test workflow**, not a claim that every system has the same
 | FR2/mmWave and experimental sub-THz qualification and stress | [TC-129 through TC-152](docs/test-diagrams/high-frequency.md) |
 | Radiated OTA qualification for ISAC-enabled systems | [TC-153 through TC-175](docs/test-diagrams/radiated-ota.md) |
 
-## What "exhaustive" means here
+## What "exhaustive" test means here?
 
-The goal is **exhaustive coverage of an explicitly declared, finite supported configuration and requirements baseline**. This document does not establish exhaustive coverage of every possible drone, attack, environment, radio, or combination of failures. A catalogue alone cannot establish that claim.
+The goal is **exhaustive coverage of an explicitly declared, finite supported configuration and requirements baseline**. This document does not establish exhaustive coverage of every possible drone, attack, environment, radio, or combination of failures. A test catalogue alone cannot establish that claim.
 
-A bounded claim is permitted only after the configuration inventory, applicable requirements, risk assessment, scenario instances, approved thresholds, and evidence are complete and reviewed. Pairwise coverage is a sampling strategy, not proof of exhaustive combination coverage. Untested combinations and residual risks must remain visible.
+A bounded claim is permitted only after the configuration inventory, applicable requirements, risk assessment, scenario instances, approved thresholds, and evidence are complete and reviewed. Pairwise coverage is a sampling strategy, not proof of exhaustive combination coverage. Untested combinations and residual risks must remain visible (Is that rare or corner cases?).
 
-ISAC sensing can contribute to warning and situational awareness; it cannot guarantee protection of a cellular tower. Detection is not identification, identification is not intent, and an unidentified object must not automatically be classified as hostile.
+ISAC sensing can contribute to warning and situational awareness; it cannot guarantee protection of a cellular tower. Detection is not identification, identification is not intent, and an unidentified object might be not automatically be classified as hostile. (Figure out what cases will be hostile?)
 
-## Safety and authorization boundaries
+## Safety and authorization boundaries (trusted boundary)
 
 Here, "destructive testing" means intentional software/data fault injection and controlled resilience stress, **not destruction of infrastructure**.
 
@@ -73,7 +73,7 @@ Here, "destructive testing" means intentional software/data fault injection and 
 - Do not inject faults into a production cellular network or disrupt emergency calls. Use isolated networks, test traffic, synthetic identities, and non-sensitive evidence.
 - The test director, network owner, aviation/spectrum authorities where applicable, and independent safety reviewer must approve scope. Applicable law and authorization vary by jurisdiction; wartime conditions do not establish permission.
 
-## Why gNodeB ISAC alone is insufficient
+## Why gNodeB enabled ISAC alone is insufficient?
 
 Communication coverage does not establish sensing coverage. Object observability depends on geometry, clutter, propagation, synchronization, calibration, available bandwidth, radio architecture, and processing resources. Antenna placement optimized for cellular users may leave sensing gaps. Shared communication/sensing resources can create a service-continuity tradeoff.
 

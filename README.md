@@ -10,6 +10,8 @@ Each scenario ID has a **Diagram** link in the matrix below. The diagram shows w
 
 **Start here:** choose a case and an actual supported configuration; fill in the [instance record](#traceability-and-execution-contract), approve the [acceptance profiles](#acceptance-profiles), prepare independent truth and establish a no-fault reference where applicable. `ALL` means separate applicable instances, not one run. Apply the [frequency overlay](#per-case-applicability-and-inheritance-rules) even when the original row does not name `K`. The matrix remains authoritative; keep its linked diagram synchronized when changing a case.
 
+**KPI / PM / events:** look up the same case ID in the [175-case KPI and PM focus table](docs/kpi-pm.md#case-specific-focus-checks). It supplies measurements, units/formulas, source ownership, proposed event families and evidence-validity rules through the case's acceptance-profile mappings. These are local test contracts, not verified standardized ISAC counter names or implemented collectors.
+
 ```mermaid
 flowchart TD
     select["Choose case, supported configuration, requirements and evidence modality"]
@@ -264,6 +266,10 @@ facility_and_authorization: isolated test boundary, permits, safety approval
 stimulus: synthetic/replay/HIL/shielded RF/authorized benign live
 ground_truth: provenance, uncertainty, time reference, scoring windows
 threshold_profile: approved version + actual limits + approver + approval date
+telemetry_contract: docs/kpi-pm.md groups + actual PM/event source mapping/version
+kpi_scoring: formulas/units/denominators/windows/strata + truth/time uncertainty
+event_contract: source events + correlation/ordering/deduplication + expected outcomes
+telemetry_validity: expected/received/missing records + resets/gaps + artifact links
 stop_plan: triggers + independent monitor + owner + safe termination action
 evidence: artifact locations, hashes, timestamps, logs, counters, decisions
 result: not-run | pass | fail | blocked | aborted | excluded
@@ -324,6 +330,12 @@ Specify units, scoring denominators, matching rules, warm-up periods, measuremen
 
 For core/AI stress tests, approve maximum load, ramp/burst/hold durations, queue capacities, admission limits, percentile definitions, recovery observation interval and stop limits before execution. Report offered load and all rejected, dropped, expired, timed-out, abstained and missing outputs; do not compute AI quality only on easy completed requests. Measure observation-to-consumer age as well as service processing time. Specify recovery point/time objectives and how accepted jobs and data are reconciled after a failure.
 
+### KPI and PM-event information for each test case
+
+The original acceptance profiles described what to assess, but did not specify a per-case PM/event contract. The [KPI, PM and event guide](docs/kpi-pm.md) now maps **every TC-001 through TC-175** to additional focus checks and maps all 16 acceptance profiles to measurement inputs, owners and local event families. For the corresponding case, collect the union of the groups inherited from its README acceptance profiles and apply its case-specific checks; do not treat a short focus row as the complete test.
+
+The guide distinguishes raw counters/gauges/distributions, derived KPIs, lifecycle events, audit and independent safety evidence. It defines truth-based scoring, units/denominators, reset/window handling, correlation and telemetry-failure rules. Thresholds remain locally approved or normative where applicable; exact standard/vendor measurement names require the real PM dictionary and applicable specification clauses. The current offline simulator exposes only a small abstract metric set, not the 175-case collection/validation system.
+
 ### Evidence and safe-stop codes
 
 Evidence must use synchronized timestamps with measured clock uncertainty, independent ground truth where applicable, configuration identifiers, and an immutable run identifier.
@@ -342,6 +354,8 @@ Evidence must use synchronized timestamps with measured clock uncertainty, indep
 | `E10` | Exact frequency/waveform/array manifest; beam state and observation-gap logs; chamber/instrument calibration and uncertainty; per-band channel/model/scene provenance; permitted RF/exposure/thermal readings and hardware/simulation status |
 | `E11` | OTA facility/layout and quiet-zone validation; reference-antenna and probe/positioner records; calibration/de-embedding and path-loss files; radiated-pattern/power/receiver data; truth-fixture geometry and movement logs; repeatability/uncertainty analysis; concurrent communication/sensing KPIs and linked end-to-end traces |
 
+For each applicable evidence code, attach the [measurement/event source contract](docs/kpi-pm.md#per-instance-measurement-contract) and raw-to-KPI reduction provenance. Event delivery timestamps are not necessarily observation timestamps; preserve both and measured clock uncertainty. Missing required PM/event evidence cannot be replaced by an unexplained aggregate KPI.
+
 Every instance needs a monitored trigger and named stop owner. The safety plan must specify what happens if the test system itself becomes unresponsive.
 
 | Code | Stop trigger and required safe outcome |
@@ -359,6 +373,8 @@ Stop codes are mandatory minimums, not an exhaustive safety plan. A failed accep
 ## Traceable scenario coverage matrix
 
 **Coverage notation:** `ALL` means expand across every applicable inventoried value of the named axes, not execute impossible combinations. A named profile requires every relevant metric in that profile plus the case-specific outcome below. Multiple profiles are conjunctive. The source/requirement mapping is local design traceability, not a standards certification.
+
+**For KPI / PM events in the corresponding row:** use that TC ID in the [case-focus table](docs/kpi-pm.md#case-specific-focus-checks), together with the [groups inherited from each acceptance profile](docs/kpi-pm.md#measurement-and-event-groups-inherited-by-acceptance-profile). The linked diagrams use the same contracts.
 
 ### Sensing, identity, and environmental conditions
 
@@ -610,6 +626,7 @@ Maintain a versioned coverage ledger using the instance fields above. A spreadsh
 5. Link every requirement and expected observable outcome to instances, acceptance-profile versions, results, evidence, and residual-risk disposition. Independently validate the ground-truth and scoring method.
 6. Require review of failures, aborts, exclusions, missing evidence, uncertainty, and restoration results. A waiver does not convert an unexecuted or failed test into a pass.
 7. Rebaseline and rerun affected cases after changes to firmware, models, training/evaluation data, preprocessing, radio configuration, core policy/API, deployment placement, dependencies, approved limits, or operating environment.
+8. Freeze actual PM/event source mappings, KPI formulas, collection windows and event expectations per instance; validate truth, clock and collector completeness before scoring. Report missing/invalid telemetry separately, with no zero-denominator or healthy-by-default result.
 
 For the core/AI extension, cover `C/B/J/H` interactions with the radio/device axes and with each other. Include shared-dependency and authority-boundary failures, not only independent node outages. Establish a no-fault baseline, then approve bounded ramps/bursts/holds, single failures, selected compound failures and post-load recovery for each applicable instance. Never infer measured capacity from a catalogue or from a single unloaded inference benchmark.
 
@@ -646,6 +663,8 @@ Report at least these separate measures; never collapse them into one unexplaine
 | Per-frequency execution and qualification | Actual passed/failed/blocked/aborted/not-run applicable instances per exact configuration, with simulation/conducted/OTA/live evidence separated; no reuse inflated into extra executions |
 
 **Current coverage:** not assessed. All 175 cases, TC-001 through TC-175, are templates awaiting configuration-specific instantiation, approval and execution. The original 128 cases require frequency-overlay review, 24 additional cases address high-frequency qualification, and 23 additional cases address radiated OTA qualification. There are no measured pass rates, validated core capacities, qualified AI models, qualified FR2/sub-THz configurations, validated OTA results or validated protection claims in this repository. Catalogue additions close design-scope gaps, not evidence or deployment gaps.
+
+KPI/PM coverage is a [local observability design](docs/kpi-pm.md), not implemented telemetry. All 175 cases have focus mappings, but actual source adapters, vendor/standard counter names, event schemas, numeric approvals and collected evidence remain prerequisites. No universal standardized ISAC PM availability or absence is asserted.
 
 Suggested claim format:
 
